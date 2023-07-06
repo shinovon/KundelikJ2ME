@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Arman Jussupgaliyev
+Copyright (c) 2023 Arman Jussupgaliyev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,16 @@ SOFTWARE.
 */
 package cc.nnproject.json;
 
-public class JSONException extends RuntimeException {
+public abstract class AbstractJSON {
 	
-	JSONException() {
+	public abstract void clear();
+	public abstract int size();
+	public abstract String toString();
+	public abstract String build();
+	public final String format() {
+		return format(0);
 	}
-	
-	JSONException(String string) {
-		super(string);
-	}
-	
-	public String toString() {
-		return getMessage() == null ? "JSONException" : "JSONException: " + getMessage();
-	}
+	protected abstract String format(int l);
+	public abstract boolean similar(Object obj);
 
 }

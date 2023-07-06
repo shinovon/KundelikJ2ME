@@ -1,6 +1,5 @@
 package kun;
-import javax.microedition.lcdui.Canvas;
-import javax.microedition.lcdui.Font;
+
 import javax.microedition.lcdui.Graphics;
 
 public class Button extends UIItem implements UIConstants {
@@ -68,14 +67,14 @@ public class Button extends UIItem implements UIConstants {
 	}
 
 	protected void keyPress(int i) {
-		if(i == Canvas.FIRE || i == -5 || i == Canvas.KEY_NUM5) {
+		if(i == -5) {
 			hover();
 			action();
 		}
 	}
 
 	protected void keyRelease(int i) {
-		if(i == Canvas.FIRE || i == -5 || i == Canvas.KEY_NUM5) {
+		if(i == -5) {
 			unhover();
 		}
 	}

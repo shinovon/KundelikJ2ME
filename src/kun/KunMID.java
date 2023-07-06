@@ -1,4 +1,5 @@
 package kun;
+
 import javax.microedition.midlet.MIDlet;
 
 public class KunMID extends MIDlet {

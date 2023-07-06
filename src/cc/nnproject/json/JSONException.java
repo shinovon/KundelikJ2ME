@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Arman Jussupgaliyev
+Copyright (c) 2023 Arman Jussupgaliyev
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,20 +21,17 @@ SOFTWARE.
 */
 package cc.nnproject.json;
 
-class JSONString {
+public class JSONException extends RuntimeException {
 	
-	private String str;
-
-	JSONString(String s) {
-		this.str = s;
+	JSONException() {
 	}
 	
-	String getString() {
-		return str;
+	JSONException(String string) {
+		super(string);
 	}
 	
 	public String toString() {
-		return str;
+		return getMessage() == null ? "JSONException" : "JSONException: " + getMessage();
 	}
 
 }

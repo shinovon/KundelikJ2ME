@@ -40,7 +40,7 @@ public class KunUI implements Runnable {
 			try {
 				loggedIn();
 			} catch (RuntimeException e) {
-				if(e.getMessage().equals("Invalid token!")) {
+				if("Invalid token!".equals(e.getMessage())) {
 					Kun.accessToken = null;
 					Kun.user = null;
 					setScreen(new LoginScreen());

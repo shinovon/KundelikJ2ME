@@ -24,14 +24,15 @@ public class UserfeedScreen extends UIScreen {
 	private int scrollTarget;
 	private int scrollTimer;
 
-	private JSONArray lessons;
 	private String className;
 	private String schoolName;
 	private String scheduleDate;
-	private JSONObject recentMarks;
 	
 	private int dayOffset;
 	private int arrowY;
+
+	private Object[][] lessons;
+	private Object[][] marks;
 
 	UserfeedScreen() {
 		super(null, null);
@@ -44,25 +45,35 @@ public class UserfeedScreen extends UIScreen {
 			rightArrowImg = Image.createImage("/rightarrow.png");
 		} catch (Exception e) {
 		}
-		try {
-			Calendar cal = Calendar.getInstance();
-			Util.addDays(cal, dayOffset);
-			scheduleDate = Util.localizeDateWithWeek(cal.getTime());
-			lessons = Kun.getSchedule(Kun.personId, Kun.groupId, Util.getApiDate(cal)).getObject(0).getArray("lessons");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		loadSchedule();
 		try {
 			//Calendar cal = Calendar.getInstance();
 			//Util.addDays(cal, -30);
 			//marks = (JSONArray) Kun.apiGet("persons/" + Kun.personId + "/edu-groups/" + Kun.groupId + "/marks/" + cal + "/" + Util.getApiDate(Calendar.getInstance()));
-			recentMarks = (JSONObject) Kun.apiGet("persons/" + Kun.personId + "/group/" + Kun.groupId + "/recentmarks?limit=10");
+			JSONObject recentMarks = (JSONObject) Kun.apiGet("persons/" + Kun.personId + "/group/" + Kun.groupId + "/recentmarks?limit=10");
 			for(Enumeration e3 = recentMarks.getArray("subjects").elements(); e3.hasMoreElements();) {
 				JSONObject tmpSubject = (JSONObject) e3.nextElement();
 				String subjectId = tmpSubject.getString("id");
 				if(!Kun.subjectsTable.containsKey(subjectId)) {
 					Kun.subjectsTable.put(subjectId, tmpSubject);
 				}
+			}
+			// парс последних оценок
+			JSONArray marks = recentMarks.getArray("marks");
+			Date lastDate = null;
+			this.marks = new Object[marks.size()][];
+			for(int i = 0; i < marks.size(); i++) {
+				JSONObject mark = marks.getObject(i);
+				this.marks[i] = new Object[4];
+				Date date = Util.parseApiDate(mark.getString("date")).getTime();
+				if(lastDate == null || !Util.isDateEqual(date, lastDate)) {
+					lastDate = date;
+					this.marks[i][0] = Util.localizeDate(date);
+				}
+				String mood = mark.getString("mood");
+				this.marks[i][1] = "good".equalsIgnoreCase(mood) ? goodImg : "bad".equalsIgnoreCase(mood) ? badImg : avgImg;
+				this.marks[i][2] = mark.getString("value");
+				this.marks[i][3] = ((JSONObject)Kun.subjectsTable.get(mark.getString("lesson_str"))).getString("name");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -76,7 +87,25 @@ public class UserfeedScreen extends UIScreen {
 			Calendar cal = Calendar.getInstance();
 			Util.addDays(cal, dayOffset);
 			scheduleDate = Util.localizeDateWithWeek(cal.getTime());
-			lessons = Kun.getSchedule(Kun.personId, Kun.groupId, Util.getApiDate(cal)).getObject(0).getArray("lessons");
+			JSONArray lessons = Kun.getSchedule(Kun.personId, Kun.groupId, Util.getApiDate(cal)).getObject(0).getArray("lessons");
+			this.lessons = new Object[lessons.size()][];
+			for(int i = 0; i < lessons.size(); i++) {
+				JSONObject lesson = lessons.getObject(i);
+				JSONArray homeworks = lesson.getArray("homeworks");
+				this.lessons[i] = new Object[7];
+				this.lessons[i][0] = String.valueOf(lesson.getInt("number"));
+				this.lessons[i][1] = lesson.getString("hours");
+				this.lessons[i][2] = lesson.getString("name");
+				if(lesson.has("mark")) {
+					JSONObject mark = lesson.getObject("mark");
+					this.lessons[i][3] = "good".equalsIgnoreCase(mark.getString("mood")) ? Boolean.TRUE : Boolean.FALSE;
+					this.lessons[i][4] = mark.getString("value");
+				}
+				this.lessons[i][5] = lesson.getString("title");
+				if(homeworks.size() > 0) {
+					this.lessons[i][6] = homeworks.getString(0);
+				}
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -131,30 +160,25 @@ public class UserfeedScreen extends UIScreen {
 		int yy = 44+nameh;
 		int markh = Math.min(100, 51+(smallfontheight*3)+8);
 		g.fillRect(0, yy, w, markh);
-		JSONArray marks = recentMarks.getArray("marks");
-		if(marks.size() == 0) {
+		if(marks.length == 0) {
 			g.setColor(0);
 			g.drawString("Нет оценок", w >> 1, yy + ((64 - mediumfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 		} else {
 			int xx = 5;
-			Date lastDate = null;
-			for(int i = 0; i < marks.size(); i++) {
-				JSONObject mark = marks.getObject(i);
-				Date date = Util.parseApiDate(mark.getString("date")).getTime();
-				if(lastDate == null || !Util.isDateEqual(date, lastDate)) {
-					lastDate = date;
+			for(int i = 0; i < marks.length; i++) {
+				Object[] mark = marks[i];
+				if(mark[0] != null) {
 					g.setColor(0x2C2C2C);
 					g.setFont(smallfont);
-					g.drawString(Util.localizeDate(date), xx, yy + 2, 0);
+					g.drawString((String) mark[0], xx, yy + 2, 0);
 				}
-				String mood = mark.getString("mood");
-				g.drawImage(mood.equalsIgnoreCase("good") ? goodImg : avgImg, xx, yy  + smallfontheight + 4, 0);
+				g.drawImage((Image) mark[1], xx, yy  + smallfontheight + 4, 0);
 				g.setColor(-1);
 				g.setFont(largefont);
-				g.drawString(mark.getString("value"), xx + 47, yy + smallfontheight + 4 + ((50 - largefontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
+				g.drawString((String) mark[2], xx + 47, yy + smallfontheight + 4 + ((50 - largefontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 				g.setColor(0);
 				g.setFont(smallfont);
-				//g.drawString(((JSONObject)Kun.subjectsTable.get(mark.getString("lesson_str"))).getString("name"), xx, yy + smallfontheight + largefontheight + 8, 0);
+				g.drawString((String) mark[3], xx, yy + smallfontheight + largefontheight + 8, 0);
 				xx += 100;
 			}
 		}
@@ -171,40 +195,38 @@ public class UserfeedScreen extends UIScreen {
 		yy+=48;
 		g.setColor(0xD8D8D8);
 		g.drawLine(0, yy, w, yy);
-		if(lessons.size() == 0) {
+		if(lessons.length == 0) {
 			g.drawRect(0, yy, w, 64);
 			g.setColor(0);
 			g.drawString("В этот день нет уроков", w >> 1, yy + ((64 - mediumfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 			yy+=64;
 		} else {
-			for(Enumeration e = lessons.elements(); e.hasMoreElements();) {
-				JSONObject lesson = (JSONObject) e.nextElement();
-				JSONArray homeworks = lesson.getArray("homeworks");
+			for(int i = 0; i < lessons.length; i++) {
+				Object[] lesson = lessons[i];
 				g.setFont(smallfont);
 				g.setColor(0x7f7f7f);
-				g.drawString(lesson.getInt("number") + " УРОК", 8, yy+8, 0);
+				g.drawString(((String) lesson[0]).concat(" УРОК"), 8, yy+8, 0);
 				g.setColor(0x0273B2);
-				g.drawString(lesson.getString("hours"), w - 12, yy+8, Graphics.RIGHT | Graphics.TOP);
+				g.drawString((String) lesson[1], w - 12, yy+8, Graphics.RIGHT | Graphics.TOP);
 				yy += 8 + smallfontheight;
 				g.setFont(mediumboldfont);
 				g.setColor(0);
-				g.drawString(lesson.getString("name"), 8, yy+8, 0);
-				if(lesson.has("mark")) {
-					JSONObject mark = lesson.getObject("mark");
-					g.setColor(mark.getString("mood").equalsIgnoreCase("good") ? 0xC2D23A : 0xF9A23B);
+				g.drawString((String) lesson[2], 8, yy+8, 0);
+				if(lesson[3] != null) {
+					g.setColor(Boolean.TRUE.equals(lesson[3]) ? 0xC2D23A : 0xF9A23B);
 					g.fillRect(w-42, yy, 30, 30);
 					g.setColor(-1);
 					g.setFont(smallfont);
-					g.drawString(mark.getString("value"), w-42+15, yy + ((30 - smallfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
+					g.drawString((String) lesson[4], w-42+15, yy + ((30 - smallfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 				}
 				yy += 8 + mediumboldfontheight;
 				g.setColor(0x7f7f7f);
 				g.setFont(smallfont);
-				g.drawString(Util.oneLine(lesson.getString("title"), smallfont, w-16), 8, yy+4, 0);
+				g.drawString(Util.oneLine((String) lesson[5], smallfont, w-16), 8, yy+4, 0);
 				yy += 4 + smallfontheight;
 				g.setColor(0);
-				if(homeworks.size() > 0) {
-					g.drawString(Util.oneLine(homeworks.getString(0), smallfont, w-16), 8, yy+8, 0);
+				if(lesson[6] != null) {
+					g.drawString(Util.oneLine((String) lesson[6], smallfont, w-16), 8, yy+8, 0);
 				}
 				yy += 16 + smallfontheight;
 				g.setColor(0xD8D8D8);

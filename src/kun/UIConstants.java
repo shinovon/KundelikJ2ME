@@ -1,4 +1,5 @@
 package kun;
+
 import javax.microedition.lcdui.Font;
 
 public interface UIConstants {

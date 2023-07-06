@@ -28,7 +28,7 @@ public class Kun {
 	static KunMID midlet;
 	static KunUI ui;
 	static boolean running;
-	static String accessToken; // XXX
+	static String accessToken;
 	static String refreshToken;
 	static String user;
 	static String personId;
@@ -37,7 +37,7 @@ public class Kun {
 	static JSONArray schools;
 	static JSONArray eduGroups;
 	static Hashtable subjectsTable = new Hashtable();
-	static boolean dnevnik = true;
+	static boolean dnevnik = false;
 	static String api = dnevnik ? dnevnikApiUrl : kundelikApiUrl;
 
 	protected static void startApp() {

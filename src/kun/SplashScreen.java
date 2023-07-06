@@ -1,4 +1,5 @@
 package kun;
+
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
@@ -18,7 +19,7 @@ public class SplashScreen extends UIScreen {
 			g.drawImage(splash, w >> 1, h >> 1, Graphics.VCENTER | Graphics.HCENTER);
 		}
 		g.setColor(0);
-		g.drawString("кун мидлет", w >> 1, h - h / 6, Graphics.TOP | Graphics.HCENTER);
+		g.drawString("типо кунделик", w >> 1, h - h / 6, Graphics.TOP | Graphics.HCENTER);
 	}
 
 }
