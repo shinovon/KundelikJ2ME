@@ -19,7 +19,7 @@ public class KunUI implements Runnable {
 	public boolean scrolling;
 	public int repaintTime;
 	private Object repaintLock = new Object();
-	private Object repaintResLock = new Object();
+	private boolean repaint;
 
 	private Thread repaintThread = new Thread(this);
 
@@ -44,6 +44,8 @@ public class KunUI implements Runnable {
 					Kun.accessToken = null;
 					Kun.user = null;
 					setScreen(new LoginScreen());
+				} else {
+					e.printStackTrace();
 				}
 			}
 		} else {
@@ -57,36 +59,30 @@ public class KunUI implements Runnable {
 	}
 	
 	public void run() {
-		boolean wasScrolling = false;
 		try {
 			while(Kun.running) {
 				while(display.getCurrent() != canv) {
-					Thread.sleep(100);
+					Thread.sleep(500);
 				}
-				if(!scrolling) { 
-					if(wasScrolling) {
-						_repaint();
-						wasScrolling = false;
-					}
+				if(!scrolling) {
+					repaint = false;
+					_repaint();
+					if(repaint) continue;
 					synchronized (repaintLock) {
-						repaintLock.wait(1000);
+						repaintLock.wait(2000);
 					}
+					continue;
 				}
 				_repaint();
-				if(scrolling) {
-					wasScrolling = true;
-				} else {
-					synchronized (repaintResLock) {
-						repaintResLock.notify();
-					}
-				}
-				waitRepaint();
+				limitFramerate();
 			}
 		} catch (InterruptedException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
-	private void waitRepaint() throws InterruptedException {
+	private void limitFramerate() throws InterruptedException {
 		int i = 30;
 		i -= repaintTime;
 		if(i > 0) Thread.sleep(i);
@@ -98,18 +94,11 @@ public class KunUI implements Runnable {
 		repaintTime = (int) (System.currentTimeMillis() - time);
 	}
 
-	public void repaint(boolean wait) {
-		if(display.getCurrent() != canv || scrolling) return;
+	public void repaint() {
+		if(display.getCurrent() != canv) return;
+		repaint = true;
 		synchronized (repaintLock) {
 			repaintLock.notify();
-		}
-		if(wait) {
-			try {
-				synchronized (repaintResLock) {
-					repaintResLock.wait(1000);
-				}
-			} catch (Exception e) {
-			}
 		}
 	}
 	
@@ -120,7 +109,7 @@ public class KunUI implements Runnable {
 		}
 		current = s;
 		canv.resetScreen();
-		repaint(true);
+		repaint();
 		s.show();
 	}
 

@@ -256,7 +256,7 @@ public class Kun {
 
 	static AbstractJSON apiGet(String url) throws IOException {
 		//System.out.println("GET " + url);
-		String r = getUtf(proxy + Util.url("https://api.dnevnik.ru/v2/" + url));
+		String r = getUtf(proxy + Util.url(api + url));
 		AbstractJSON json;
 		switch (r.charAt(0)) {
 		case '{':
@@ -347,6 +347,7 @@ public class Kun {
 	}
 
 	static String postUtf(String url, String data) throws IOException {
+		System.out.println("POST " + data);
 		return new String(postBytes(url, data), "UTF-8");
 	}
 
@@ -357,8 +358,9 @@ public class Kun {
 		InputStream is = null;
 		ByteArrayOutputStream o = null;
 		try {
-			hc.setRequestMethod("GET");
+			hc.setRequestMethod("POST");
 			hc.setRequestProperty("Content-Length", "" + b.length);
+			hc.setRequestProperty("Content-Type", "application/json");
 			OutputStream os = hc.openOutputStream();
 			os.write(b);
 			os.close();

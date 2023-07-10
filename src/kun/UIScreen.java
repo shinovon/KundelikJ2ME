@@ -43,11 +43,11 @@ public abstract class UIScreen implements UIConstants {
 	}
 	
 	public void repaint() {
-		ui.repaint(false);
+		ui.repaint();
 	}
 	
 	public void repaint(UIItem item) {
-		ui.repaint(false);
+		ui.repaint();
 	}
 
 	public int getHeight() {

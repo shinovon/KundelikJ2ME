@@ -73,7 +73,10 @@ public class UserfeedScreen extends UIScreen {
 				String mood = mark.getString("mood");
 				this.marks[i][1] = "good".equalsIgnoreCase(mood) ? goodImg : "bad".equalsIgnoreCase(mood) ? badImg : avgImg;
 				this.marks[i][2] = mark.getString("value");
-				this.marks[i][3] = ((JSONObject)Kun.subjectsTable.get(mark.getString("lesson_str"))).getString("name");
+				JSONObject subj = ((JSONObject)Kun.subjectsTable.get(mark.getString("lesson_str")));
+				if(subj != null) {
+					this.marks[i][3] = subj.getString("name");
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -178,7 +181,9 @@ public class UserfeedScreen extends UIScreen {
 				g.drawString((String) mark[2], xx + 47, yy + smallfontheight + 4 + ((50 - largefontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 				g.setColor(0);
 				g.setFont(smallfont);
-				g.drawString((String) mark[3], xx, yy + smallfontheight + largefontheight + 8, 0);
+				if(mark[3] != null) {
+					g.drawString((String) mark[3], xx, yy + smallfontheight + largefontheight + 8, 0);
+				}
 				xx += 100;
 			}
 		}

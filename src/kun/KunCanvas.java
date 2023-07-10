@@ -196,14 +196,13 @@ public class KunCanvas extends GameCanvas implements UIConstants {
 	}
 	
 	protected void sizeChanged(int w, int h) {
-		width = w;
-		height = h;
-		Util.testCanvas();
+		KunUI.width = width = w;
+		KunUI.height = height = h;
 		if(ui != null) needRepaint();
 	}
 
 	private void needRepaint() {
-		ui.repaint(false);
+		ui.repaint();
 	}
 	
 	public void hideNotify() {
