@@ -24,8 +24,7 @@ public class Util {
 				sb.append((char) c);
 			} else if (c == 32) {
 				sb.append("%20");
-			} else if (c == 45 || c == 95 || c == 46 || c == 33 || c == 126 || c == 42 || c == 39 || c == 40
-					|| c == 41) {
+			} else if (c == 45 || c == 95 || c == 46 || c == 33 || c == 126 || c == 42 || c == 39 || c == 40 || c == 41) {
 				sb.append((char) c);
 			} else if (c <= 127) {
 				sb.append(hex(c));
@@ -273,6 +272,37 @@ public class Util {
 			return "";
 		}
 	}
+	
+	static String localizeMonthShort(int month) {
+		switch(month) {
+		case Calendar.JANUARY:
+			return "янв";
+		case Calendar.FEBRUARY:
+			return "фев";
+		case Calendar.MARCH:
+			return "мар";
+		case Calendar.APRIL:
+			return "апр";
+		case Calendar.MAY:
+			return "мая";
+		case Calendar.JUNE:
+			return "июн";
+		case Calendar.JULY:
+			return "июл";
+		case Calendar.AUGUST:
+			return "авг";
+		case Calendar.SEPTEMBER:
+			return "сен";
+		case Calendar.OCTOBER:
+			return "окт";
+		case Calendar.NOVEMBER:
+			return "ноя";
+		case Calendar.DECEMBER:
+			return "дек";
+		default:
+			return "";
+		}
+	}
 
 	public static String localizeDateWithWeek(Date date) {
 		Calendar cal = Calendar.getInstance();
@@ -286,19 +316,23 @@ public class Util {
 		return cal.get(Calendar.DAY_OF_MONTH) + " " + localizeMonthWithCase(cal.get(Calendar.MONTH));
 	}
 
+	public static String localizeDateShort(Date date) {
+		Calendar cal = Calendar.getInstance();
+		if(date != null) cal.setTime(date);
+		return cal.get(Calendar.DAY_OF_MONTH) + " " + localizeMonthShort(cal.get(Calendar.MONTH));
+	}
+
 	public static String localizeToday() {
 		return localizeDateWithWeek(null);
 	}
 
-	public static String oneLine(String text, Font font, int maxWidth) {
-		text = replace(text, "\r", "").replace('\n', ' ');
+	public static String getOneLine(String text, Font font, int maxWidth) {
 		if(font.stringWidth(text) < maxWidth) {
 			return text;
 		}
-		while(font.stringWidth(text + "..") >= maxWidth) {
-			text = text.substring(0, text.length() - 1);
-		}
-		return text + "..";
+		maxWidth -= font.charWidth('.')*2;
+		while(font.stringWidth((text = text.substring(0, text.length() - 1))) >= maxWidth);
+		return text.concat("..");
 	}
 
 	public static boolean isDateEqual(Date a, Date b) {

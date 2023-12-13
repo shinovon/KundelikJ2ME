@@ -1,6 +1,5 @@
 package kun;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -295,8 +294,7 @@ public class Kun {
 	static ContentConnection open(String url) throws IOException {
 		try {
 			ContentConnection con = (ContentConnection) Connector.open(url);
-			if (con instanceof HttpConnection && accessToken != null
-					&& (url.toString().indexOf("api.kundelik.kz") != -1 || url.toString().indexOf("api.dnevnik.ru") != -1)) {
+			if (con instanceof HttpConnection && accessToken != null && (url.indexOf("api.kundelik.kz") != -1 || url.indexOf("api.dnevnik.ru") != -1)) {
 				((HttpConnection) con).setRequestProperty("Access-Token", accessToken);
 			}
 			return con;
@@ -310,30 +308,26 @@ public class Kun {
 		System.out.println("GET " + url);
 		HttpConnection hc = (HttpConnection) open(url);
 		InputStream is = null;
-		ByteArrayOutputStream o = null;
 		try {
 			hc.setRequestMethod("GET");
 			int r = hc.getResponseCode();
 			if (r != 200)
 				throw new IOException(r + " " + hc.getResponseMessage());
-			is = hc.openInputStream();
-			o = new ByteArrayOutputStream();
-			byte[] buf = new byte[256];
-			int len;
-			while ((len = is.read(buf)) != -1) {
-				o.write(buf, 0, len);
-			}
-			return o.toByteArray();
+			return downloadBytes(is = hc.openInputStream(), (int) hc.getLength(), 1024, 2048);
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 			throw new IOException(e.toString());
 		} finally {
-			if (is != null)
-				is.close();
-			if (hc != null)
-				hc.close();
-			if (o != null)
-				o.close();
+			try {
+				if (is != null)
+					is.close();
+			} catch (IOException e) {
+			}
+			try {
+				if (hc != null)
+					hc.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 
@@ -347,16 +341,15 @@ public class Kun {
 	}
 
 	static String postUtf(String url, String data) throws IOException {
-		System.out.println("POST " + data);
+		System.out.println("POST DATA " + data);
 		return new String(postBytes(url, data), "UTF-8");
 	}
 
 	static byte[] postBytes(String url, String data) throws IOException {
 		byte[] b = data.getBytes("UTF-8");
-		System.out.println("GET " + url);
+		System.out.println("POST " + url);
 		HttpConnection hc = (HttpConnection) open(url);
 		InputStream is = null;
-		ByteArrayOutputStream o = null;
 		try {
 			hc.setRequestMethod("POST");
 			hc.setRequestProperty("Content-Length", "" + b.length);
@@ -367,25 +360,45 @@ public class Kun {
 			int r = hc.getResponseCode();
 			if (r != 200)
 				throw new IOException(r + " " + hc.getResponseMessage());
-			is = hc.openInputStream();
-			o = new ByteArrayOutputStream();
-			byte[] buf = new byte[256];
-			int len;
-			while ((len = is.read(buf)) != -1) {
-				o.write(buf, 0, len);
-			}
-			return o.toByteArray();
+			return downloadBytes(is = hc.openInputStream(), (int) hc.getLength(), 1024, 2048);
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 			throw new IOException(e.toString());
 		} finally {
-			if (is != null)
-				is.close();
-			if (hc != null)
-				hc.close();
-			if (o != null)
-				o.close();
+			try {
+				if (is != null)
+					is.close();
+			} catch (IOException e) {
+			}
+			try {
+				if (hc != null)
+					hc.close();
+			} catch (IOException e) {
+			}
 		}
+	}
+	
+	private static byte[] downloadBytes(InputStream inputStream, int initialSize, int bufferSize, int expandSize) throws IOException {
+		if (initialSize <= 0) initialSize = bufferSize;
+		byte[] buf = new byte[initialSize];
+		int count = 0;
+		byte[] readBuf = new byte[bufferSize];
+		int readLen;
+		while ((readLen = inputStream.read(readBuf)) != -1) {
+			if(count + readLen > buf.length) {
+				byte[] newbuf = new byte[count + expandSize];
+				System.arraycopy(buf, 0, newbuf, 0, count);
+				buf = newbuf;
+			}
+			System.arraycopy(readBuf, 0, buf, count, readLen);
+			count += readLen;
+		}
+		if(buf.length == count) {
+			return buf;
+		}
+		byte[] res = new byte[count];
+		System.arraycopy(buf, 0, res, 0, count);
+		return res;
 	}
 
 }

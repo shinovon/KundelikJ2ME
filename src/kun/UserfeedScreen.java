@@ -33,6 +33,7 @@ public class UserfeedScreen extends UIScreen {
 
 	private Object[][] lessons;
 	private Object[][] marks;
+	private boolean loading;
 
 	UserfeedScreen() {
 		super(null, null);
@@ -68,7 +69,7 @@ public class UserfeedScreen extends UIScreen {
 				Date date = Util.parseApiDate(mark.getString("date")).getTime();
 				if(lastDate == null || !Util.isDateEqual(date, lastDate)) {
 					lastDate = date;
-					this.marks[i][0] = Util.localizeDate(date);
+					this.marks[i][0] = Util.localizeDateShort(date);
 				}
 				String mood = mark.getString("mood");
 				this.marks[i][1] = "good".equalsIgnoreCase(mood) ? goodImg : "bad".equalsIgnoreCase(mood) ? badImg : avgImg;
@@ -87,6 +88,8 @@ public class UserfeedScreen extends UIScreen {
 	
 	private void loadSchedule() {
 		try {
+			loading = true;
+			repaint();
 			Calendar cal = Calendar.getInstance();
 			Util.addDays(cal, dayOffset);
 			scheduleDate = Util.localizeDateWithWeek(cal.getTime());
@@ -112,6 +115,8 @@ public class UserfeedScreen extends UIScreen {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		loading = false;
+		repaint();
 	}
 	
 	protected void tap(int x, int y, int time) {
@@ -166,9 +171,10 @@ public class UserfeedScreen extends UIScreen {
 		if(marks.length == 0) {
 			g.setColor(0);
 			g.drawString("Нет оценок", w >> 1, yy + ((64 - mediumfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
-		} else {
+		} else if(yy+markh+scroll > 0) {
 			int xx = 5;
 			for(int i = 0; i < marks.length; i++) {
+				if(xx > w) break;
 				Object[] mark = marks[i];
 				if(mark[0] != null) {
 					g.setColor(0x2C2C2C);
@@ -200,10 +206,10 @@ public class UserfeedScreen extends UIScreen {
 		yy+=48;
 		g.setColor(0xD8D8D8);
 		g.drawLine(0, yy, w, yy);
-		if(lessons.length == 0) {
+		if(loading || lessons.length == 0) {
 			g.drawRect(0, yy, w, 64);
 			g.setColor(0);
-			g.drawString("В этот день нет уроков", w >> 1, yy + ((64 - mediumfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
+			g.drawString(loading ? "Загрузка" : "В этот день нет уроков", w >> 1, yy + ((64 - mediumfontheight) >> 1), Graphics.HCENTER | Graphics.TOP);
 			yy+=64;
 		} else {
 			for(int i = 0; i < lessons.length; i++) {
@@ -227,11 +233,11 @@ public class UserfeedScreen extends UIScreen {
 				yy += 8 + mediumboldfontheight;
 				g.setColor(0x7f7f7f);
 				g.setFont(smallfont);
-				g.drawString(Util.oneLine((String) lesson[5], smallfont, w-16), 8, yy+4, 0);
+				g.drawString(Util.getOneLine((String) lesson[5], smallfont, w-16), 8, yy+4, 0);
 				yy += 4 + smallfontheight;
 				g.setColor(0);
 				if(lesson[6] != null) {
-					g.drawString(Util.oneLine((String) lesson[6], smallfont, w-16), 8, yy+8, 0);
+					g.drawString(Util.getOneLine((String) lesson[6], smallfont, w-16), 8, yy+8, 0);
 				}
 				yy += 16 + smallfontheight;
 				g.setColor(0xD8D8D8);
